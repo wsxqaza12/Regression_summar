@@ -73,12 +73,23 @@ summary(model_M)
 ###############
 ### 信賴區間 ##
 ###############
-confint(model_M, "H2S", level = 0.95)
-confint(model_M, "Lactic", level = 0.95)
+H2S_cof <- confint(model_M, "H2S", level = 0.95)
+Lactic_cof <- confint(model_M, "Lactic", level = 0.95)
 
 ##################
 ###聯合信賴區間###
 ##################
+# install.packages("ellipse")
+library(ellipse)
+attach(cheese)
+
+plot(ellipse(model_M, which = c('H2S', 'Lactic'), level = 0.95), type = 'l',
+     main = "Confidence Region and Confidence Interval")
+points(model_M$coefficients['H2S'], model_M$coefficients['Lactic'], pch = 16) 
+abline(v = H2S_cof[1], lty = 2) ; abline(v = H2S_cof[2], lty = 2)
+abline(h = Lactic_cof[1], lty = 2) ; abline(h = Lactic_cof[2], lty = 2)
+
+detach(IQ)
 
 #############
 ### 配適值 ##
