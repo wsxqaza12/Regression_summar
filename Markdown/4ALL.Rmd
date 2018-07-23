@@ -1,0 +1,252 @@
+---
+title: "第4章"
+author: "變異數分析與模型比較"
+header-includes:
+   - \usepackage{bbm}
+---
+<span id = "jump"><font color="red"></font></span>
+* [目錄](#1)
+
+* [1. 身體脂肪與皮褶厚度](#1.1)
+
+* [2. 汽車定價模型](#1.2)
+
+* [3. 校友捐款](#1.3)
+
+<h2 id="1.1"></h2>
+# $1. 身體脂肪與皮褶厚度$
+
+### $(a) 描述性統計$
+```{r include=FALSE}
+options(digits = 4)
+library(knitr)
+library(data.table)
+bodyfat0 <- fread("C:\\Users\\User\\Documents\\Regression_summar\\bodyfat.csv")
+bodyfat <- bodyfat0[, 2:11]
+library(RcmdrMisc)
+library(plyr)
+library(dplyr)
+numS_dataframe <- function(x){
+  temp <- numSummary(x, statistics = c("mean", "sd", "se(mean)", "IQR", "quantiles", "cv"), quantiles=c(0,.25,.5,.75,1))
+  df <- ldply (temp, data.frame)
+  sel <- df[df$.id == "table", ]
+  sel <- sel %>% select(-.id ,- X..i..)
+  colnames(sel) <- c("mean", "sd", "se(mean)", "IQR", "cv", "0%","25%","50%", "75%", "100%")
+  rownames(sel) <- names(x)
+  sel
+}
+
+```
+
+```{r echo=FALSE}
+bodyfat_sum <- numS_dataframe(bodyfat)
+kable(bodyfat_sum)
+```
+
+### $(b) 成對散布圖$
+```{r include=FALSE}
+library(showtext)
+library(ggplot2)
+library(GGally)
+```
+
+```{r echo=FALSE}
+ggpairs(bodyfat,
+        lower = list(continuous = wrap("points", color = "red", alpha = I(1/10)),
+                     combo = wrap("box", color = "orange", alpha = 0.3),
+                     discrete = wrap("facetbar", color = "yellow", alpha = 0.3) ),
+        diag = list(continuous = wrap("densityDiag",  color = "blue", alpha = 0.5) ))+
+  theme(axis.text.x = element_text(angle = 270, hjust = 0, vjust = 0.5))
+```
+
+### $(c) 相關係數矩陣$
+$前面散布圖就有提到$
+```{r include=FALSE}
+library(Hmisc)
+library(corrplot)
+corre <- rcorr(as.matrix(bodyfat))
+# 寫一個FUN
+flattenCorrMatrix <- function(cormat, pmat) {
+  ut <- upper.tri(cormat)
+  data.frame( row = rownames(cormat)[row(cormat)[ut]], 
+              column = rownames(cormat)[col(cormat)[ut]], cor =(cormat)[ut], p = pmat[ut] )
+}
+# 合併相關係數跟P值為一個矩陣
+corre_ALL <- flattenCorrMatrix(corre$r, corre$P)
+# 加上*號
+corre_ALL[corre_ALL[, 4] <0.05, 5] <- "*"
+corre_ALL[corre_ALL[, 4] <0.01, 5] <- "**"
+corre_ALL[corre_ALL[, 4] <0.001, 5] <- "***"
+corre_ALL[is.na(corre_ALL$V5), 5] <- ""
+colnames(corre_ALL)[5] <- "" 
+```
+
+
+```{r echo=FALSE}
+kable(corre_ALL)
+```
+
+$用更直觀的圖形表示$
+```{r echo=FALSE}
+corrplot(cor(bodyfat), type = "upper", order = "hclust", tl.col = "black", tl.srt = 45)
+```
+
+### $(e, g) 複回歸模型M_A$
+$兩題都可以在表中找到$
+```{r echo=FALSE}
+MA <- lm(fat ~ ht + wt + hip + fore, data = bodyfat)
+summary(MA)
+```
+
+### $(h) 比較M_A跟M_0$
+```{r echo=FALSE}
+options(contrasts = c("contr.sum", "contr.poly"))
+
+M0 <- lm(fat ~ 1, data = bodyfat)
+anova(MA, M0)
+```
+
+### $(i) M_A的Type I 跟 Type III$
+$Type I$
+```{r echo=FALSE}
+library(car)
+# Type I tests
+anova(MA)
+```
+$Type III$
+```{r echo=FALSE}
+# Type III tests
+Anova(MA, type="III") 
+```
+
+### $(j) M_A的Type I 跟 Type II (不同排序)$
+$Type I$
+```{r echo=FALSE}
+MA_t <- lm(fat ~ fore + hip + wt + ht, data = bodyfat)
+# Type I tests
+anova(MA_t)
+```
+$Type III$
+```{r echo=FALSE}
+# Type III tests
+Anova(MA_t, type="III") 
+```
+
+### $(k) 比較M_A與M_B$
+```{r echo=FALSE}
+# Nested model comparison
+MB <- lm(fat ~ ht + wt, data = bodyfat)
+anova(MA, MB, test = "F")
+```
+<div style="page-break-after: always;"></div>
+<h3 id="1.2"></h3>
+# $2. 汽車定價模型$
+
+### $(a) 描述性統計$
+```{r include=FALSE}
+options(digits = 4)
+library(knitr)
+library(data.table)
+library(dplyr)
+car2013_0 <- fread("C:\\Users\\User\\Documents\\Regression_summar\\cars2013test.csv")
+car2013 <- car2013_0 %>% select(price, mpgcitycity, hpower, CC, weight)
+library(RcmdrMisc)
+```
+
+```{r echo=FALSE}
+car2013_sum <- numS_dataframe(car2013)
+kable(car2013_sum)
+```
+
+### $(c, e) 複回歸模型M_A$
+$兩題都可以在表中找到$
+```{r echo=FALSE}
+MA <- lm(price ~ mpgcitycity + hpower + CC + weight, data = car2013)
+summary(MA)
+```
+
+### $(f) M_A的Type I 跟 Type III$
+$Type I$
+```{r echo=FALSE}
+library(car)
+# Type I tests
+anova(MA)
+```
+$Type III$
+```{r echo=FALSE}
+# Type III tests
+Anova(MA, type="III") 
+```
+
+### $(g) 比較M_A與M_B$
+```{r echo=FALSE}
+MB <- lm(price ~ mpgcitycity + hpower, data = car2013)
+anova(MA, MB, test = "F")
+```
+
+### $(h) M_A的Type I 跟 Type II (不同排序)$
+$Type I$
+```{r echo=FALSE}
+# 反過來做
+MA_t <- lm(price ~ hpower + CC + mpgcitycity + weight, data = car2013)
+# Type I test
+anova(MA_t)
+```
+$Type III$
+```{r echo=FALSE}
+# Type III tests
+Anova(MA_t, type="III") 
+```
+
+<div style="page-break-after: always;"></div>
+<h3 id="1.3"> </h3>
+# $3. 校友捐款$
+### $(a) 描述性統計$
+```{r include=FALSE}
+options(digits = 4)
+library(knitr)
+library(data.table)
+library(dplyr)
+USA0 <- fread("C:\\Users\\User\\Documents\\Regression_summar\\USAlumniDonation.csv")
+USA <- USA0 %>% select(AGR, grad, under, SFR)
+library(RcmdrMisc)
+```
+
+```{r echo=FALSE}
+USA_sum <- numS_dataframe(USA)
+kable(USA_sum)
+```
+
+### $(c) 複回歸模型M_A$
+```{r echo=FALSE}
+MA <- lm(AGR ~ grad + under + under + SFR, data = USA)
+summary(MA)
+```
+
+### $(e) 比較M_A跟M_0$
+```{r echo=FALSE}
+library(car)
+options(contrasts = c("contr.sum", "contr.poly"))
+M0 <- lm(AGR ~ 1, data = USA)
+anova(MA, M0)
+```
+
+### $(f) M_A的Type I 跟 Type III$
+$Type I$
+```{r echo=FALSE}
+library(car)
+# Type I tests
+anova(MA)
+```
+$Type III$
+```{r echo=FALSE}
+# Type III tests
+Anova(MA, type="III") 
+```
+
+### $(g) 比較M_A與M_B$
+```{r echo=FALSE}
+MB <- lm(AGR ~ grad, data = USA)
+anova(MA, MB, test = "F")
+```
+<a href="#jump" target="_self">返回</a>

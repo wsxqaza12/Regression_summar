@@ -1,0 +1,79 @@
+---
+title: "第4章"
+author: "琪婕"
+header-includes:
+   - \usepackage{bbm}
+---
+* [1. 身體脂肪與皮褶厚度](#1)
+
+* [2. 汽車定價模型](#2)
+
+* [3. 校友捐款](#3)
+
+# $2. 汽車定價模型$
+<a href="#jump" target="_self">???明文字</a>
+### $(a) 描述性統計$
+```{r include=FALSE}
+options(digits = 4)
+library(knitr)
+library(data.table)
+library(dplyr)
+car2013_0 <- fread("C:\\Users\\User\\Documents\\Regression_summar\\cars2013test.csv")
+car2013 <- car2013_0 %>% select(price, mpgcitycity, hpower, CC, weight)
+library(RcmdrMisc)
+```
+
+```{r echo=FALSE}
+numSummary(car2013, statistics = c("mean", "sd", "se(mean)", "IQR", "quantiles", "cv"), quantiles=c(0,.25,.5,.75,1))
+```
+
+### $(c, e) 複回歸模型M_A$
+$兩題都可以在表中找到$
+```{r echo=FALSE}
+MA <- lm(price ~ mpgcitycity + hpower + CC + weight, data = car2013)
+summary(MA)
+```
+# <h3 id="3">1.2???行</h3>
+### $(f) M_A的Type I 跟 Type III$
+$Type I$
+```{r echo=FALSE}
+library(car)
+# Type I tests
+anova(MA)
+```
+$Type III$
+```{r echo=FALSE}
+# Type III tests
+Anova(MA, type="III") 
+```
+
+### $(g) 比較M_A與M_B$
+```{r echo=FALSE}
+MB <- lm(price ~ mpgcitycity + hpower, data = car2013)
+anova(MA, MB, test = "F")
+```
+
+### $(h) M_A的Type I 跟 Type II (不同排序)$
+$Type I$
+```{r echo=FALSE}
+# 反過來做
+MA_t <- lm(price ~ hpower + CC + mpgcitycity + weight, data = car2013)
+# Type I test
+anova(MA_t)
+```
+$Type III$
+```{r echo=FALSE}
+# Type III tests
+Anova(MA_t, type="III") 
+```
+
+
+
+<h2 id="1">1.???法示例</h2>
+
+<h3 id="2">1.1???片</h3>
+
+
+
+
+

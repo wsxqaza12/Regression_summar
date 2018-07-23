@@ -1,4 +1,4 @@
-setwd("C:/Users/User/Documents/Regression_summar/")
+setwd("~/Regression_summar")
 library(data.table)
 library(dplyr)
 
@@ -9,8 +9,21 @@ car2013 <- car2013_0 %>% select(price, mpgcitycity, hpower, CC, weight)
 ####描述性統計#####
 ###################
 library(RcmdrMisc)
-summary(car2013)
-numSummary(car2013, statistics = c("mean", "sd", "se(mean)", "IQR", "quantiles", "cv"), quantiles=c(0,.25,.5,.75,1))
+
+numS_dataframe <- function(x){
+  library(plyr)
+  library(dplyr)
+  temp <- numSummary(x, statistics = c("mean", "sd", "se(mean)", "IQR", "quantiles", "cv"), quantiles=c(0,.25,.5,.75,1))
+  df <- ldply (temp, data.frame)
+  sel <- df[df$.id == "table", ]
+  sel <- sel %>% select(-.id ,- X..i..)
+  colnames(sel) <- c("mean", "sd", "se(mean)", "IQR", "cv", "0%","25%","50%", "75%", "100%")
+  rownames(sel) <- names(x)
+  sel
+}
+
+numS_dataframe(car2013)
+
 
 ################
 ###複回歸模型###

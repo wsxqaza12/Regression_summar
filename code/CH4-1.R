@@ -1,4 +1,4 @@
-setwd("C:/Users/User/Documents/Regression_summar/")
+setwd("~/Regression_summar")
 library(data.table)
 
 bodyfat0 <- fread("bodyfat.csv")
@@ -8,8 +8,20 @@ bodyfat <- bodyfat0[, 2:11]
 ###################
 library(RcmdrMisc)
 summary(bodyfat)
-numSummary(bodyfat, statistics = c("mean", "sd", "se(mean)", "IQR", "quantiles", "cv"), quantiles=c(0,.25,.5,.75,1))
 
+numS_dataframe <- function(x){
+  library(plyr)
+  library(dplyr)
+  temp <- numSummary(x, statistics = c("mean", "sd", "se(mean)", "IQR", "quantiles", "cv"), quantiles=c(0,.25,.5,.75,1))
+  df <- ldply (temp, data.frame)
+  sel <- df[df$.id == "table", ]
+  sel <- sel %>% select(-.id ,- X..i..)
+  colnames(sel) <- c("mean", "sd", "se(mean)", "IQR", "cv", "0%","25%","50%", "75%", "100%")
+  rownames(sel) <- names(x)
+  sel
+}
+
+numS_dataframe(bodyfat)
 ###################
 ####成對散布圖#####
 ###################
@@ -41,12 +53,11 @@ pairs(bodyfat,
 #   labs(title = "成對散布圖")
 
 ggpairs(bodyfat,
-        title = "成對散布圖",
         lower = list(continuous = wrap("points", color = "red", alpha = I(1/10)), 
                      combo = wrap("box", color = "orange", alpha = 0.3), 
                      discrete = wrap("facetbar", color = "yellow", alpha = 0.3) ), 
         diag = list(continuous = wrap("densityDiag",  color = "blue", alpha = 0.5) ))+
-  theme(text=element_text(size=12,  family="BL"))
+  theme(axis.text.x = element_text(angle = 270, hjust = 0, vjust = 0.5))
   
 # pdf("try.pdf")
 # dev.off()

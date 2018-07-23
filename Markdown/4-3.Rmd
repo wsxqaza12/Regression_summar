@@ -1,0 +1,61 @@
+---
+title: "第4章"
+author: "琪婕"
+header-includes:
+   - \usepackage{bbm}
+output: 
+  html_document: 
+    toc: yes
+    toc_depth: 2
+---
+
+
+# $3. 校友捐款$
+
+### $(a) 描述性統計$
+```{r include=FALSE}
+options(digits = 4)
+library(knitr)
+library(data.table)
+library(dplyr)
+USA0 <- fread("C:\\Users\\User\\Documents\\Regression_summar\\USAlumniDonation.csv")
+USA <- USA0 %>% select(AGR, grad, under, SFR)
+library(RcmdrMisc)
+```
+
+```{r echo=FALSE}
+numSummary(USA, statistics = c("mean", "sd", "se(mean)", "IQR", "quantiles", "cv"), quantiles=c(0,.25,.5,.75,1))
+```
+
+### $(c) 複回歸模型M_A$
+```{r echo=FALSE}
+MA <- lm(AGR ~ grad + under + under + SFR, data = USA)
+summary(MA)
+```
+
+### $(e) 比較M_A跟M_0$
+```{r echo=FALSE}
+library(car)
+options(contrasts = c("contr.sum", "contr.poly"))
+M0 <- lm(AGR ~ 1, data = USA)
+anova(MA, M0)
+```
+
+### $(f) M_A的Type I 跟 Type III$
+$Type I$
+```{r echo=FALSE}
+library(car)
+# Type I tests
+anova(MA)
+```
+$Type III$
+```{r echo=FALSE}
+# Type III tests
+Anova(MA, type="III") 
+```
+
+### $(g) 比較M_A與M_B$
+```{r echo=FALSE}
+MB <- lm(AGR ~ grad, data = USA)
+anova(MA, MB, test = "F")
+```
